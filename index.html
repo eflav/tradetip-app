@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>tradetip</title>
+<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="tradetip">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#f6f7f9;--card:#fff;--fg:#14161a;--muted:#667085;--line:#e4e7ec;--chip:#eef1f5;
+  --buy:#16803c;--buy-bg:#e7f6ec;--sell:#c4320a;--sell-bg:#fdeee8;--warn:#b54708;--warn-bg:#fff4e5;
+  --hold:#175cd3;--hold-bg:#eaf2ff;--flat:#98a2b3;--accent:#14161a;--accent-fg:#fff;--shadow:0 1px 2px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--card:#181b21;--fg:#eef0f3;--muted:#98a2b3;--line:#262a33;--chip:#222631;
+  --buy:#3ccf6e;--buy-bg:#12281b;--sell:#ff7a4d;--sell-bg:#2e1911;--warn:#fdb022;--warn-bg:#2b2110;
+  --hold:#84adff;--hold-bg:#152238;--flat:#6b7280;--accent:#eef0f3;--accent-fg:#0f1115;--shadow:none;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--card:#181b21;--fg:#eef0f3;--muted:#98a2b3;--line:#262a33;--chip:#222631;
+  --buy:#3ccf6e;--buy-bg:#12281b;--sell:#ff7a4d;--sell-bg:#2e1911;--warn:#fdb022;--warn-bg:#2b2110;
+  --hold:#84adff;--hold-bg:#152238;--flat:#6b7280;--accent:#eef0f3;--accent-fg:#0f1115;--shadow:none;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 110px)}
+header{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+header h1{font-size:22px;margin:0;letter-spacing:-.02em}
+header .sub{color:var(--muted);font-size:13px}
+header .grow{flex:1;min-width:0}
+.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);
+  font-size:18px;display:grid;place-items:center;cursor:pointer}
+.iconbtn:active{transform:scale(.96)}
+.banner{border-radius:14px;padding:12px 14px;margin:0 0 12px;font-size:14px;border:1px solid}
+.banner.closed{background:var(--warn-bg);border-color:var(--warn);color:var(--fg)}
+.banner.open{background:var(--buy-bg);border-color:var(--buy)}
+.banner b{display:block;font-size:15px;margin-bottom:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;box-shadow:var(--shadow)}
+.stat .n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .l{font-size:11px;color:var(--muted)}
+.stat.act .n{color:var(--buy)} .stat.warn .n{color:var(--warn)} .stat.hold .n{color:var(--hold)}
+.search{width:100%;font:inherit;font-size:16px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--fg);margin:0 0 12px}
+details{margin:0 0 12px}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:650;font-size:14px;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 2px}
+summary::-webkit-details-marker{display:none}
+summary .chev{margin-left:auto;transition:transform .15s} details[open] summary .chev{transform:rotate(90deg)}
+.count{background:var(--chip);color:var(--fg);border-radius:999px;padding:1px 8px;font-size:12px;text-transform:none;letter-spacing:0}
+.empty{color:var(--muted);font-size:14px;padding:4px 2px 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 16px;margin:0 0 8px;
+  position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--flat)}
+.card.buy::before{background:var(--buy)} .card.sell::before{background:var(--sell)}
+.card.warn_buy::before,.card.warn_sell::before{background:var(--warn)} .card.hold::before{background:var(--hold)}
+.row1{display:flex;align-items:center;gap:8px}
+.sym{font-weight:750;font-size:17px;border:0;background:none;color:var(--fg);padding:0;cursor:pointer;font-family:inherit}
+.sym::after{content:" ⧉";font-size:12px;color:var(--muted);font-weight:400}
+.mkt{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 5px}
+.pill{margin-left:auto;font-size:12.5px;font-weight:650;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.pill.buy{background:var(--buy);color:#fff} .pill.sell{background:var(--sell);color:#fff}
+.pill.warn_buy,.pill.warn_sell{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+.pill.hold{background:var(--hold-bg);color:var(--hold)} .pill.flat{background:var(--chip);color:var(--muted)}
+.name{color:var(--muted);font-size:13.5px;margin:2px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row3{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.row3 .own{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--fg);font-size:13px;cursor:pointer;user-select:none}
+.switch{appearance:none;width:40px;height:24px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;margin:0;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch:checked{background:var(--hold)} .switch:checked::after{left:19px}
+.changed .row3 .own{font-weight:700}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);
+  background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.dock .inner{max-width:640px;margin:0 auto;display:flex;gap:8px;flex-direction:column}
+.status{font-size:12.5px;color:var(--muted);text-align:center;min-height:17px}
+.status a{color:inherit}
+.btn{width:100%;font:inherit;font-weight:650;font-size:16px;border:0;border-radius:14px;padding:14px;cursor:pointer;
+  background:var(--accent);color:var(--accent-fg)}
+.btn.secondary{background:var(--card);color:var(--fg);border:1px solid var(--line)}
+.btn.save{background:var(--hold);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%) translateY(-120%);
+  background:var(--accent);color:var(--accent-fg);padding:9px 14px;border-radius:12px;font-size:14px;transition:transform .2s;z-index:9}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.setup{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.setup h2{margin:0 0 6px;font-size:18px} .setup p,.setup li{color:var(--muted);font-size:14px}
+.setup label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+.setup input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.setup ol{padding-left:20px;margin:8px 0} .setup a{color:var(--hold)}
+.err{color:var(--sell);font-size:14px;margin:8px 0 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<main>
+  <header>
+    <div class="grow"><h1>tradetip</h1><div class="sub" id="sub">Loading…</div></div>
+    <button class="iconbtn" id="refresh" aria-label="Refresh">↻</button>
+    <button class="iconbtn" id="settings" aria-label="Settings">⚙</button>
+  </header>
+
+  <section id="setup" class="setup hidden">
+    <h2>Connect to your repo</h2>
+    <p>Your signals stay in your private GitHub repo. This app reads them with a key that only works on that repo. The key is stored on this phone only.</p>
+    <ol>
+      <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → new fine-grained token</a>.</li>
+      <li>Repository access: <b>Only select repositories → tradetip</b>.</li>
+      <li>Permissions: <b>Contents: Read and write</b> and <b>Actions: Read and write</b>.</li>
+      <li>Generate, copy, and paste it below.</li>
+    </ol>
+    <label for="repo">Repository</label>
+    <input id="repo" autocomplete="off" autocapitalize="off" spellcheck="false" value="eflav/tradetip">
+    <label for="token">Token</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div class="err" id="setupErr"></div>
+    <p style="margin-top:14px"><button class="btn" id="connect">Connect</button></p>
+    <p><button class="btn secondary hidden" id="forget">Remove key from this phone</button></p>
+  </section>
+
+  <section id="app" class="hidden">
+    <div id="banner" class="banner"></div>
+    <div class="stats">
+      <div class="stat act"><div class="n" id="nAct">0</div><div class="l">act now</div></div>
+      <div class="stat warn"><div class="n" id="nWarn">0</div><div class="l">unverified</div></div>
+      <div class="stat hold"><div class="n" id="nHold">0</div><div class="l">hold</div></div>
+      <div class="stat"><div class="n" id="nFlat">0</div><div class="l">nothing</div></div>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Search your stocks" autocomplete="off">
+    <details open id="secAct"><summary>Act now <span class="count" id="cAct">0</span><span class="chev">›</span></summary><div class="list" id="lAct"></div></details>
+    <details id="secWarn"><summary>Unverified, don't act <span class="count" id="cWarn">0</span><span class="chev">›</span></summary><div class="list" id="lWarn"></div></details>
+    <details open id="secHold"><summary>You hold <span class="count" id="cHold">0</span><span class="chev">›</span></summary><div class="list" id="lHold"></div></details>
+    <details id="secFlat"><summary>Nothing to do <span class="count" id="cFlat">0</span><span class="chev">›</span></summary><div class="list" id="lFlat"></div></details>
+    <p class="empty">Trade windows (UK): London 08:15–16:15 · US 14:45–20:45. Tap a symbol to copy it, then paste it into Trading 212 search.</p>
+  </section>
+</main>
+
+<div class="dock hidden" id="dock"><div class="inner">
+  <div class="status" id="status"></div>
+  <button class="btn save hidden" id="save">Save holdings</button>
+  <button class="btn" id="run">Run fresh signals now</button>
+</div></div>
+
+<script>
+const API = "https://api.github.com";
+const LABEL = {buy: g => "BUY £" + g, sell: () => "SELL all", warn_buy: () => "Buy? unverified", warn_sell: () => "Sell? unverified",
+               hold: () => "Hold", flat: () => "Nothing"};
+const SECTION = {buy: "Act", sell: "Act", warn_buy: "Warn", warn_sell: "Warn", hold: "Hold", flat: "Flat"};
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("tradetip." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("tradetip." + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem("tradetip." + k); } catch (e) {} },
+};
+let data = null, owned = new Set(), savedOwned = new Set(), holdingsSha = null, pollTimer = null, dispatchedAt = 0;
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800); }
+function cfg() { return {repo: store.get("repo", "eflav/tradetip"), token: store.get("token", "")}; }
+
+async function gh(path, opts = {}) {
+  const {token} = cfg();
+  const r = await fetch(API + path, {cache: "no-store", ...opts, headers: {
+    "Authorization": "Bearer " + token, "X-GitHub-Api-Version": "2022-11-28",
+    "Accept": opts.raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", ...(opts.headers || {})}});
+  if (r.status === 401) throw Object.assign(new Error("The key was rejected. Create a new one in Settings."), {auth: true});
+  return r;
+}
+
+const b64decode = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+const b64encode = s => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+const parseOwned = yaml => new Set([...yaml.matchAll(/^\s*-\s*["']?([^"'\s#]+)["']?\s*$/gm)].map(m => m[1]));
+const dumpOwned = set => "# Instruments you hold in Trading 212 (goldsim tickers, e.g. NVDA, AZN.L).\n" +
+  "# The phone messages say buy / sell by comparing the model with this list.\n" +
+  (set.size ? "owned:\n" + [...set].sort().map(t => "- " + t).join("\n") + "\n" : "owned: []\n");
+
+function kindOf(r, own) {
+  if (r.in_market && !own) return r.ok ? "buy" : "warn_buy";
+  if (!r.in_market && own) return r.ok ? "sell" : "warn_sell";
+  return r.in_market ? "hold" : "flat";
+}
+
+function fmtWhen(iso) {
+  try { return new Date(iso).toLocaleString("en-GB", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London"}); }
+  catch (e) { return iso; }
+}
+
+function render() {
+  if (!data) return;
+  const q = $("q").value.trim().toLowerCase();
+  $("sub").textContent = (data.when === "morning" ? "Morning check" : "Evening plan") + " · " + fmtWhen(data.generated_at) + " · prices to " + data.asof;
+  const b = $("banner");
+  b.className = "banner " + (data.gate_open ? "open" : "closed");
+  b.innerHTML = data.gate_open
+    ? "<b>Proven edge found</b>Only green and red cards are backed by it."
+    : "<b>No proven edge: don't trade</b>No strategy beats luck and buy-and-hold after costs. Signals below are for information only.";
+  const lists = {Act: [], Warn: [], Hold: [], Flat: []}, counts = {Act: 0, Warn: 0, Hold: 0, Flat: 0};
+  for (const r of data.rows) {
+    const own = owned.has(r.ticker), k = kindOf(r, own), sec = SECTION[k];
+    counts[sec]++;
+    if (q && !(r.symbol + " " + r.name + " " + r.ticker).toLowerCase().includes(q)) continue;
+    lists[sec].push(card(r, k, own));
+  }
+  for (const s of ["Act", "Warn", "Hold", "Flat"]) {
+    const l = $("l" + s); l.replaceChildren(...lists[s]);
+    if (!lists[s].length) { const e = document.createElement("div"); e.className = "empty";
+      e.textContent = q ? "No matches." : s === "Act" ? "Nothing to buy or sell today." : s === "Hold" ? "Switch on “I own” for what you hold." : "None."; l.append(e); }
+    $("c" + s).textContent = counts[s];
+    if (q) $("sec" + s).open = lists[s].length > 0;
+  }
+  $("nAct").textContent = counts.Act; $("nWarn").textContent = counts.Warn; $("nHold").textContent = counts.Hold; $("nFlat").textContent = counts.Flat;
+  const dirty = [...owned].sort().join() !== [...savedOwned].sort().join();
+  $("save").classList.toggle("hidden", !dirty);
+}
+
+function card(r, k, own) {
+  const c = document.createElement("div");
+  c.className = "card " + k + (own !== savedOwned.has(r.ticker) ? " changed" : "");
+  const sym = document.createElement("button"); sym.className = "sym"; sym.textContent = r.symbol;
+  sym.onclick = () => copy(r.symbol);
+  const mkt = document.createElement("span"); mkt.className = "mkt"; mkt.textContent = r.market;
+  const pill = document.createElement("span"); pill.className = "pill " + k; pill.textContent = LABEL[k](r.target_gbp.toFixed(2));
+  const row1 = document.createElement("div"); row1.className = "row1"; row1.append(sym, mkt, pill);
+  const name = document.createElement("div"); name.className = "name"; name.textContent = r.name;
+  const meta = document.createElement("span");
+  meta.textContent = (r.in_market ? "Target £" + r.target_gbp.toFixed(2) : "Model out") + " · £" + r.price_gbp.toFixed(2) + " · " + r.model + " · DSR " + r.dsr.toFixed(2);
+  const lab = document.createElement("label"); lab.className = "own";
+  const sw = document.createElement("input"); sw.type = "checkbox"; sw.className = "switch"; sw.checked = own;
+  sw.setAttribute("aria-label", "I own " + r.name);
+  sw.onchange = () => { sw.checked ? owned.add(r.ticker) : owned.delete(r.ticker); store.set("ownedDraft", [...owned]); render(); };
+  lab.append("I own", sw);
+  const row3 = document.createElement("div"); row3.className = "row3"; row3.append(meta, lab);
+  c.append(row1, name, row3);
+  return c;
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("Copied " + text); }
+  catch (e) { toast(text); }
+}
+
+async function load(quiet) {
+  const {repo} = cfg();
+  $("refresh").disabled = true;
+  try {
+    const [sig, hold] = await Promise.all([
+      gh(`/repos/${repo}/contents/signals.json?ref=signals`, {raw: true}),
+      gh(`/repos/${repo}/contents/configs/holdings.yaml?ref=main`),
+    ]);
+    if (sig.status === 404) { data = null; $("sub").textContent = "No signals yet: tap Run fresh signals now."; }
+    else if (!sig.ok) throw new Error("Couldn't load signals (HTTP " + sig.status + ")");
+    else { data = await sig.json(); store.set("data", data); }
+    if (hold.ok) {
+      const h = await hold.json(); holdingsSha = h.sha; savedOwned = parseOwned(b64decode(h.content));
+      store.set("savedOwned", [...savedOwned]);
+      const draft = store.get("ownedDraft", null);
+      owned = draft ? new Set(draft) : new Set(savedOwned);
+    } else if (hold.status === 404) { holdingsSha = null; savedOwned = new Set(); owned = new Set(store.get("ownedDraft", [])); }
+    showApp(); render(); if (!quiet) toast("Up to date");
+    runStatus();
+  } catch (e) {
+    if (e.auth) { showSetup(e.message); return; }
+    toast(navigator.onLine ? e.message : "Offline: showing the last list");
+  } finally { $("refresh").disabled = false; }
+}
+
+async function saveHoldings() {
+  const {repo} = cfg(); const btn = $("save"); btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const body = {message: "holdings: update from phone", content: b64encode(dumpOwned(owned)), branch: "main"};
+    if (holdingsSha) body.sha = holdingsSha;
+    const r = await gh(`/repos/${repo}/contents/configs/holdings.yaml`, {method: "PUT", body: JSON.stringify(body)});
+    if (r.status === 409 || r.status === 422) throw new Error("Holdings changed elsewhere. Refresh and try again.");
+    if (r.status === 403 || r.status === 404) throw new Error("The key can't write to the repo: it needs Contents: Read and write.");
+    if (!r.ok) throw new Error("Save failed (HTTP " + r.status + ")");
+    const j = await r.json(); holdingsSha = j.content.sha; savedOwned = new Set(owned); store.del("ownedDraft");
+    toast("Holdings saved"); render();
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; btn.textContent = "Save holdings"; }
+}
+
+async function runNow() {
+  const {repo} = cfg(); const btn = $("run"); btn.disabled = true;
+  const hour = Number(new Date().toLocaleString("en-GB", {hour: "2-digit", hour12: false, timeZone: "Europe/London"}));
+  const when = hour < 14 ? "morning" : "evening";
+  try {
+    const r = await gh(`/repos/${repo}/actions/workflows/daily.yml/dispatches`, {method: "POST", body: JSON.stringify({ref: "main", inputs: {when}})});
+    if (r.status === 403 || r.status === 404) throw new Error("The key can't start runs: it needs Actions: Read and write.");
+    if (r.status !== 204) throw new Error("Couldn't start a run (HTTP " + r.status + ")");
+    toast("Started. Takes about 5–8 minutes.");
+    $("status").textContent = "Starting…";
+    dispatchedAt = Date.now() - 60000;       // allow for clock skew between phone and GitHub
+    setTimeout(runStatus, 5000);
+  } catch (e) { toast(e.message); btn.disabled = false; }
+}
+
+async function runStatus() {
+  const {repo} = cfg(); clearTimeout(pollTimer);
+  try {
+    const r = await gh(`/repos/${repo}/actions/workflows/daily.yml/runs?per_page=1`);
+    if (!r.ok) return;
+    const run = (await r.json()).workflow_runs[0]; if (!run) { $("status").textContent = ""; return; }
+    if (dispatchedAt && Date.parse(run.created_at) < dispatchedAt) {   // our run isn't listed yet
+      if (Date.now() - dispatchedAt < 180000) { pollTimer = setTimeout(runStatus, 5000); return; }
+      dispatchedAt = 0;
+    }
+    if (dispatchedAt) { $("status").dataset.wasRunning = "1"; dispatchedAt = 0; }
+    const running = run.status !== "completed";
+    $("run").disabled = running;
+    const s = $("status"); s.replaceChildren();
+    const a = document.createElement("a"); a.href = run.html_url; a.target = "_blank"; a.rel = "noopener";
+    if (running) {
+      a.textContent = "Run in progress (started " + fmtWhen(run.created_at) + ")…"; s.append(a);
+      pollTimer = setTimeout(async () => { await runStatus(); }, 20000);
+    } else {
+      a.textContent = (run.conclusion === "success" ? "Last run OK" : "Last run " + run.conclusion) + " · " + fmtWhen(run.updated_at); s.append(a);
+      if (s.dataset.wasRunning === "1") { s.dataset.wasRunning = ""; load(true).then(() => toast("New signals loaded")); }
+    }
+    if (running) s.dataset.wasRunning = "1";
+  } catch (e) {}
+}
+
+function showSetup(msg) {
+  $("setup").classList.remove("hidden"); $("app").classList.add("hidden"); $("dock").classList.add("hidden");
+  $("repo").value = cfg().repo; $("setupErr").textContent = msg || "";
+  $("forget").classList.toggle("hidden", !cfg().token); $("sub").textContent = "Setup";
+}
+function showApp() { $("setup").classList.add("hidden"); $("app").classList.remove("hidden"); $("dock").classList.remove("hidden"); }
+
+$("connect").onclick = async () => {
+  const token = $("token").value.trim(), repo = $("repo").value.trim();
+  if (!token) { $("setupErr").textContent = "Paste the token first."; return; }
+  store.set("token", token); store.set("repo", repo); $("token").value = "";
+  await load();
+};
+$("forget").onclick = () => { store.del("token"); store.del("data"); store.del("ownedDraft"); toast("Key removed"); showSetup(); };
+$("settings").onclick = () => showSetup();
+$("refresh").onclick = () => cfg().token ? load() : showSetup();
+$("save").onclick = saveHoldings;
+$("run").onclick = runNow;
+$("q").oninput = render;
+document.addEventListener("visibilitychange", () => { if (!document.hidden && cfg().token) load(true); });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if (!cfg().token) showSetup();
+else {
+  data = store.get("data", null); savedOwned = new Set(store.get("savedOwned", []));
+  owned = new Set(store.get("ownedDraft", null) || savedOwned);
+  if (data) { showApp(); render(); }
+  load(true);
+}
+</script>
+</body>
+</html>
